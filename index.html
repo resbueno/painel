@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambientes ACTO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .status-card, .problem-card, .summary-card {
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Cabeçalho e Ações -->
+        <header class="flex flex-wrap justify-between items-center mb-4 gap-4">
+            <div class="text-left">
+                <h1 class="text-3xl sm:text-4xl font-bold text-orange-600">Ambientes ACTO</h1>
+                <p class="text-gray-500 mt-1">Painel de status do ambiente</p>
+            </div>
+            <div class="flex items-center gap-2">
+                 <button id="login-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Login</button>
+                 <button id="logout-btn" class="hidden bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Logout</button>
+            </div>
+        </header>
+
+        <div id="status-area" class="bg-gray-100 p-1">
+            <!-- Data e Hora -->
+            <div class="text-right text-gray-500 text-sm mb-4" id="current-datetime"></div>
+
+            <!-- Painel de Resumo -->
+            <section id="summary-dashboard" class="mb-2"></section>
+
+            <!-- Legenda de Cores -->
+            <section id="color-legend" class="mb-10"></section>
+            
+            <!-- Filtro -->
+            <div class="mb-8">
+                 <label for="layout-filter" class="block text-sm font-medium text-gray-600">Filtrar por Localidade</label>
+                 <select id="layout-filter" class="mt-1 block w-full md:w-1/3 bg-white border-gray-300 text-gray-800 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500 shadow-sm"></select>
+            </div>
+
+
+            <!-- Seção de Status -->
+            <main id="main-content" class="space-y-10">
+                <!-- As linhas e cards de status serão inseridos aqui -->
+            </main>
+        </div>
+
+        <!-- Seção de Ações Administrativas -->
+        <div id="admin-actions-section" class="hidden">
+            <div class="flex justify-end mt-12 mb-6">
+                <button id="normalize-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Normalizar Todos os Ambientes</button>
+            </div>
+            
+            <!-- Seção de Reportar Problema -->
+            <section class="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Reportar Novo Problema</h2>
+                <form id="report-form" class="space-y-4">
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                        <div>
+                            <label for="service-select" class="block text-sm font-medium text-gray-600">Serviço</label>
+                            <select id="service-select" name="service" class="mt-1 block w-full bg-gray-50 border-gray-300 text-gray-800 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500"></select>
+                        </div>
+                        <div>
+                            <label for="status-select" class="block text-sm font-medium text-gray-600">Status do Problema</label>
+                            <select id="status-select" name="status" class="mt-1 block w-full bg-gray-50 border-gray-300 text-gray-800 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-300"></select>
+                        </div>
+                        <div>
+                            <label for="previsao-input" class="block text-sm font-medium text-gray-600">Previsão de Retorno</label>
+                            <input type="datetime-local" id="previsao-input" name="previsao" class="mt-1 block w-full bg-gray-50 border-gray-300 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                        <div>
+                            <label for="os-input" class="block text-sm font-medium text-gray-600">OS</label>
+                            <input type="text" id="os-input" name="os" class="mt-1 block w-full bg-gray-50 border-gray-300 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500" placeholder="Número da OS, se aplicável">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="servico-impactado-input" class="block text-sm font-medium text-gray-600">Serviço Impactado</label>
+                            <input type="text" id="servico-impactado-input" name="servicoImpactado" class="mt-1 block w-full bg-gray-50 border-gray-300 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500" placeholder="Ex: Acesso ao sistema X, Lentidão na rede">
+                        </div>
+                        <div class="md:col-span-3">
+                            <label for="details-input" class="block text-sm font-medium text-gray-600">Detalhes</label>
+                            <textarea id="details-input" name="details" rows="3" class="mt-1 block w-full bg-gray-50 border-gray-300 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500" placeholder="Descreva o que está ocorrendo"></textarea>
+                        </div>
+                     </div>
+                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-md">
+                        Registrar Caso
+                    </button>
+                </form>
+            </section>
+        </div>
+
+        <!-- Modals -->
+        <div id="login-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl p-8 text-center max-w-sm mx-auto">
+                <h3 class="text-2xl font-bold mb-6 text-gray-800">Acesso Restrito</h3>
+                <form id="login-form" class="space-y-4">
+                    <input type="email" id="username-input" class="w-full border-gray-300 rounded-md p-3 text-center" placeholder="E-mail" required>
+                    <input type="password" id="password-input" class="w-full border-gray-300 rounded-md p-3 text-center" placeholder="Senha" required>
+                    <p id="login-error" class="text-red-500 text-sm hidden">E-mail ou senha inválidos.</p>
+                    <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Entrar</button>
+                </form>
+                 <button id="cancel-login-btn" class="mt-4 text-sm text-gray-500 hover:text-gray-700">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="confirmation-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl p-6 text-center max-w-sm mx-auto">
+                <p id="modal-message" class="text-lg font-medium text-gray-800"></p>
+                <button id="close-confirmation-modal-btn" class="mt-6 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                    Fechar
+                </button>
+            </div>
+        </div>
+        
+        <div id="normalize-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl p-8 text-center max-w-sm mx-auto">
+                <h3 class="text-xl font-bold mb-4 text-gray-800">Normalizar Todos os Ambientes?</h3>
+                <p class="text-gray-600 mb-6">Esta ação resolverá todos os problemas em aberto. Você tem certeza?</p>
+                <div class="flex justify-center gap-4">
+                    <button id="confirm-normalize-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition">Sim, Normalizar</button>
+                    <button id="cancel-normalize-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resolve-geral-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-lg shadow-xl p-8 text-center max-w-md mx-auto">
+                <h3 class="text-xl font-bold mb-4 text-gray-800">Resolver Caso Geral</h3>
+                <p class="text-gray-600 mb-6">Como deseja resolver este problema, que foi originado em "Geral"?</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                     <button id="resolve-specific-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Resolver Somente Este</button>
+                     <button id="resolve-geral-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition">Resolver para Geral</button>
+                     <button id="cancel-resolve-geral-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="edit-case-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+             <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-auto max-h-[90vh] flex flex-col">
+                <h3 class="text-2xl font-bold p-6 border-b border-gray-200 text-gray-800">Editar Problema</h3>
+                <form id="edit-case-form" class="p-6 overflow-y-auto">
+                     <input type="hidden" id="edit-service-id" name="serviceId">
+                     <input type="hidden" id="edit-case-id" name="caseId">
+                     <input type="hidden" id="edit-geral-case-id" name="geralCaseId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <label for="edit-status-select" class="block text-sm font-medium text-gray-600">Status do Problema</label>
+                            <select id="edit-status-select" name="status" class="mt-1 block w-full bg-gray-50 border-gray-300 text-gray-800 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-300"></select>
+                        </div>
+                        <div>
+                            <label for="edit-os-input" class="block text-sm font-medium text-gray-600">OS</label>
+                            <input type="text" id="edit-os-input" name="os" class="mt-1 block w-full bg-gray-50 border-gray-300 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500" placeholder="Número da OS, se aplicável">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="edit-servico-impactado-input" class="block text-sm font-medium text-gray-600">Serviço Impactado</label>
+                            <input type="text" id="edit-servico-impactado-input" name="servicoImpactado" class="mt-1 block w-full bg-gray-50 border-gray-300 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500" placeholder="Ex: Acesso ao sistema X, Lentidão na rede">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="edit-details-input" class="block text-sm font-medium text-gray-600">Detalhes</label>
+                            <textarea id="edit-details-input" name="details" rows="3" class="mt-1 block w-full bg-gray-50 border-gray-300 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500" placeholder="Descreva o que está ocorrendo"></textarea>
+                        </div>
+                         <div>
+                            <label for="edit-previsao-input" class="block text-sm font-medium text-gray-600">Previsão de Retorno</label>
+                            <input type="datetime-local" id="edit-previsao-input" name="previsao" class="mt-1 block w-full bg-gray-50 border-gray-300 rounded-md p-3 focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                    </div>
+                </form>
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg mt-auto">
+                    <div id="edit-normal-footer" class="hidden">
+                        <div class="flex justify-end gap-4">
+                            <button type="button" class="cancel-edit-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition">Cancelar</button>
+                            <button type="button" id="save-normal-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition">Salvar</button>
+                        </div>
+                    </div>
+                     <div id="edit-geral-footer" class="hidden">
+                         <p class="text-sm text-gray-500 mb-4">Este problema foi originado em "Geral". Como deseja salvar a alteração?</p>
+                         <div class="flex flex-col sm:flex-row justify-end gap-4">
+                             <button type="button" class="cancel-edit-btn bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-lg transition">Cancelar</button>
+                             <button type="button" id="save-specific-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition">Atualizar Somente Este</button>
+                             <button type="button" id="save-geral-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition">Atualizar para Geral</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importa os módulos do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // =================================================================================
+        // CREDENCIAIS DO FIREBASE
+        // =================================================================================
+        const firebaseConfig = {
+          apiKey: "AIzaSyB8aO2I-IximzR1terDvYch4vhgwejX5WU",
+          authDomain: "painel-acto-ti.firebaseapp.com",
+          projectId: "painel-acto-ti",
+          storageBucket: "painel-acto-ti.appspot.com",
+          messagingSenderId: "643541170957",
+          appId: "1:643541170957:web:2183a694de96747c3d4e44"
+        };
+        // =================================================================================
+
+        // Inicializa o Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- CONFIGURAÇÃO INICIAL ---
+        const initialServices = [
+            { id: 'geral_all', name: 'Geral (Reportar em Todos)', problems: [] },
+            { id: 'interno', name: 'Interno', problems: [] },
+            { id: 'homologacao', name: 'Homologação', problems: [] },
+            { id: 'homologacao_3', name: 'Homologação 3', problems: [] },
+            { id: 'maua_obras', name: 'Mauá - Obras', problems: [] },
+            { id: 'osasco_ci', name: 'Osasco - CI', problems: [] },
+            { id: 'osasco_obras', name: 'Osasco - Obras', problems: [] },
+            { id: 'santos_ci', name: 'Santos - CI', problems: [] },
+            { id: 'santos_obras', name: 'Santos - Obras', problems: [] },
+            { id: 'sao_jose_rio_preto_fiscalizacao', name: 'Fiscalização', problems: [] },
+        ];
+
+        const layoutConfig = [
+            { title: 'ACTO Interno', serviceIds: ['interno', 'homologacao', 'homologacao_3'] },
+            { title: 'Mauá', serviceIds: ['maua_obras'] },
+            { title: 'Osasco', serviceIds: ['osasco_ci', 'osasco_obras'] },
+            { title: 'Santos', serviceIds: ['santos_ci', 'santos_obras'] },
+            { title: 'São José do Rio Preto', serviceIds: ['sao_jose_rio_preto_fiscalizacao'] },
+        ];
+
+        const statusConfig = {
+            'Operacional':     { color: 'bg-green-500',  icon: '✅', title: 'Operacional', severity: 0 },
+            'Em verificação':  { color: 'bg-purple-500', icon: '🔍', title: 'Em Verificação', severity: 1 },
+            'Configuração':    { color: 'bg-blue-500',   icon: '⚙️', title: 'Configuração', severity: 2 },
+            'Impacto parcial': { color: 'bg-yellow-500', icon: '⚠️', title: 'Impacto Parcial', severity: 3 },
+            'Manutenção':      { color: 'bg-orange-500', icon: '🛠️', title: 'Manutenção', severity: 4 },
+            'Indisponibilidade':{ color: 'bg-red-500',    icon: '❌', title: 'Indisponibilidade', severity: 5 }
+        };
+        
+        const summaryColors = { Verde: 'bg-green-500', Roxo: 'bg-purple-500', Azul: 'bg-blue-500', Laranja: 'bg-orange-500', Amarelo: 'bg-yellow-500', Vermelho: 'bg-red-500' };
+        const legendConfig = { 'Verde': 'Operacional', 'Roxo': 'Em Verificação', 'Azul': 'Configuração', 'Amarelo': 'Impacto Parcial', 'Laranja': 'Manutenção', 'Vermelho': 'Indisponibilidade' };
+
+        let services = [];
+        let countdownIntervals = [];
+        let resolveContext = {};
+        
+        // --- FUNÇÕES GERAIS ---
+        function formatPrevisaoForDisplay(previsao) {
+            if (!previsao) return "Não informada";
+            try {
+                const d = new Date(previsao);
+                return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', '');
+            } catch (e) { return previsao; }
+        }
+
+        function getOverallStatus(service) {
+            if (service.problems.length === 0) return 'Operacional';
+            return service.problems.reduce((mostSevere, current) => {
+                return statusConfig[current.status].severity > statusConfig[mostSevere.status].severity ? current : mostSevere;
+            }).status;
+        }
+
+        function startCountdown(elementId, targetDateStr) {
+            const countdownElement = document.getElementById(elementId);
+            if (!countdownElement || !targetDateStr) return;
+            const targetDate = new Date(targetDateStr).getTime();
+            const interval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = targetDate - now;
+                if (distance < 0) {
+                    countdownElement.innerHTML = `<span class="text-red-500 font-semibold">Prazo Expirado</span>`;
+                    clearInterval(interval);
+                    return;
+                }
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                countdownElement.innerHTML = `Tempo restante: <span class="font-semibold text-gray-800">${days}d ${hours}h ${minutes}m ${seconds}s</span>`;
+            }, 1000);
+            countdownIntervals.push(interval);
+        }
+
+        function renderSummaryDashboard(summaryDashboard) {
+            summaryDashboard.innerHTML = '<h2 class="text-2xl font-semibold mb-4 text-gray-700">Resumo do Ambiente</h2>';
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4';
+
+            layoutConfig.forEach(row => {
+                const counts = { Verde: 0, Roxo: 0, Azul: 0, Laranja: 0, Amarelo: 0, Vermelho: 0 };
+                row.serviceIds.forEach(id => {
+                    const service = services.find(s => s.id === id);
+                    if(!service) return;
+                    const status = getOverallStatus(service);
+                    if(status === 'Operacional') counts.Verde++;
+                    else if(status === 'Em verificação') counts.Roxo++;
+                    else if(status === 'Configuração') counts.Azul++;
+                    else if(status === 'Impacto parcial') counts.Amarelo++;
+                    else if(status === 'Manutenção') counts.Laranja++;
+                    else if(status === 'Indisponibilidade') { counts.Vermelho++; }
+                });
+
+                const summaryCard = document.createElement('div');
+                summaryCard.className = 'summary-card bg-white p-4 rounded-lg';
+                summaryCard.innerHTML = `
+                    <h3 class="font-bold text-md text-gray-800 mb-3 truncate">${row.title}</h3>
+                    <div class="flex justify-around items-center text-center">
+                        ${Object.keys(legendConfig).map(key => `
+                            <div>
+                                <div class="w-8 h-8 rounded-full ${summaryColors[key]} flex items-center justify-center text-white font-bold text-sm mx-auto">${counts[key]}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                grid.appendChild(summaryCard);
+            });
+            summaryDashboard.appendChild(grid);
+        }
+        
+        function renderLegend(legendContainer) {
+            legendContainer.innerHTML = `
+                 <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 mt-4">
+                    ${Object.entries(legendConfig).map(([colorName, text]) => `
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 rounded-full ${summaryColors[colorName]} mr-2"></span>
+                            <span class="text-sm text-gray-600">${text}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function renderStatus(mainContent, layoutFilter, isLoggedIn) {
+            countdownIntervals.forEach(clearInterval);
+            countdownIntervals = [];
+
+            const filterValue = layoutFilter.value;
+            mainContent.innerHTML = ''; 
+            
+            layoutConfig
+                .filter(row => filterValue === 'todos' || row.title === filterValue)
+                .forEach(row => {
+                    const rowContainer = document.createElement('div');
+                    rowContainer.className = 'fade-in';
+                    
+                    const title = document.createElement('h2');
+                    title.className = 'text-2xl font-semibold mb-6 text-gray-700';
+                    title.textContent = row.title;
+                    rowContainer.appendChild(title);
+
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+
+                    row.serviceIds.forEach(serviceId => {
+                        const service = services.find(s => s.id === serviceId);
+                        if (!service) return;
+
+                        const serviceContainer = document.createElement('div');
+                        const overallStatusName = getOverallStatus(service);
+                        const config = statusConfig[overallStatusName];
+                        
+                        serviceContainer.innerHTML = `
+                            <div class="status-card bg-white p-5 rounded-xl">
+                                <h3 class="font-bold text-lg text-gray-800 truncate">${service.name}</h3>
+                                <div class="flex items-center mt-2">
+                                    <span class="w-4 h-4 rounded-full ${config.color} mr-2 flex-shrink-0"></span>
+                                    <p class="font-semibold text-lg" style="color: ${config.color.replace('bg-','text-')}">${config.title}</p>
+                                    ${service.problems.length > 0 ? `<span class="ml-auto text-sm font-bold text-white ${config.color} rounded-full px-2 py-0.5">${service.problems.length}</span>` : ''}
+                                </div>
+                            </div>`;
+                        
+                        if (service.problems.length > 0) {
+                            const problemsContainer = document.createElement('div');
+                            problemsContainer.className = 'space-y-3 mt-3 pl-4 border-l-4 border-gray-200';
+                            
+                            service.problems.forEach(problem => {
+                                const problemConfig = statusConfig[problem.status];
+                                const problemCard = document.createElement('div');
+                                problemCard.className = 'problem-card bg-gray-50 p-4 rounded-lg';
+                                
+                                let detailsHTML = '<div class="space-y-1 text-sm">';
+                                detailsHTML += `<div><strong class="font-semibold text-gray-700">Status:</strong> <span class="font-semibold" style="color: ${problemConfig.color.replace('bg-','text-')}">${problem.status}</span></div>`;
+                                if(problem.os) detailsHTML += `<div><strong class="font-semibold text-gray-700">OS:</strong> <span class="text-gray-600">${problem.os}</span></div>`;
+                                if(problem.details) detailsHTML += `<div><strong class="font-semibold text-gray-700">Detalhes:</strong> <span class="text-gray-600">${problem.details}</span></div>`;
+                                if(problem.servicoImpactado) detailsHTML += `<div><strong class="font-semibold text-gray-700">Serviço Impactado:</strong> <span class="text-gray-600">${problem.servicoImpactado}</span></div>`;
+                                if(problem.previsao) {
+                                    detailsHTML += `<div><strong class="font-semibold text-gray-700">Previsão:</strong> <span class="text-gray-600">${formatPrevisaoForDisplay(problem.previsao)}</span></div>`;
+                                    detailsHTML += `<div class="text-xs text-gray-500 mt-1" id="countdown-${problem.caseId}"></div>`;
+                                }
+                                detailsHTML += '</div>';
+
+                                problemCard.innerHTML = `
+                                    ${detailsHTML}
+                                    <div class="mt-3 text-right flex gap-2 justify-end ${isLoggedIn ? '' : 'hidden'}">
+                                        <button class="edit-btn bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-1 px-3 rounded-md transition" data-service-id="${service.id}" data-case-id="${problem.caseId}">Editar</button>
+                                        <button class="resolve-btn bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-1 px-3 rounded-md transition" data-service-id="${service.id}" data-case-id="${problem.caseId}">Resolver</button>
+                                    </div>
+                                `;
+                                problemsContainer.appendChild(problemCard);
+
+                                if (problem.previsao) {
+                                    startCountdown(`countdown-${problem.caseId}`, problem.previsao);
+                                }
+                            });
+                            serviceContainer.appendChild(problemsContainer);
+                        }
+                        
+                        grid.appendChild(serviceContainer);
+                    });
+                    rowContainer.appendChild(grid);
+                    mainContent.appendChild(rowContainer);
+                });
+        }
+        
+        function populateFilter(layoutFilter) {
+            layoutFilter.innerHTML = '<option value="todos">Todos</option>';
+            layoutConfig.forEach(row => {
+                const option = document.createElement('option');
+                option.value = row.title;
+                option.textContent = row.title;
+                layoutFilter.appendChild(option);
+            });
+        }
+
+        function populateSelects(serviceSelect, statusSelect, editStatusSelect) {
+            serviceSelect.innerHTML = '';
+            const servicesToShow = services.length > 1 ? services : services.filter(s => s.id !== 'geral_all');
+
+            servicesToShow.forEach(service => {
+                const option = document.createElement('option');
+                option.value = service.id;
+                option.textContent = service.name.replace('(Alterar Todos)', '(Reportar em Todos)');
+                serviceSelect.appendChild(option);
+            });
+
+            const statusOptionsHTML = Object.keys(statusConfig)
+                .filter(statusName => statusName !== 'Operacional')
+                .map(statusName => `<option value="${statusName}">${statusConfig[statusName].icon} ${statusName}</option>`)
+                .join('');
+            
+            statusSelect.innerHTML = statusOptionsHTML;
+            if (editStatusSelect) editStatusSelect.innerHTML = statusOptionsHTML;
+        }
+
+        function updateSelectBackground(selectElement) {
+            Object.values(statusConfig).forEach(conf => selectElement.classList.remove(conf.color.replace('500', '200')));
+            const config = statusConfig[selectElement.value];
+            if (config) selectElement.classList.add(config.color.replace('500', '200'));
+        }
+        
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (firebaseConfig.apiKey === "COLE_AQUI_SUA_API_KEY") {
+                document.body.innerHTML = `<div class="p-8 text-center text-red-500 bg-red-100">
+                    <h1 class="text-2xl font-bold">Erro de Configuração do Firebase</h1>
+                    <p class="mt-4">As credenciais do Firebase não foram preenchidas no código. Por favor, edite o arquivo HTML e cole o objeto <code>firebaseConfig</code> que você copiou do console do Firebase.</p>
+                </div>`;
+                return;
+            }
+            
+            const mainContent = document.getElementById('main-content');
+            const summaryDashboard = document.getElementById('summary-dashboard');
+            const legendContainer = document.getElementById('color-legend');
+            const currentDatetimeEl = document.getElementById('current-datetime');
+            const reportForm = document.getElementById('report-form');
+            const layoutFilter = document.getElementById('layout-filter');
+            
+            const adminActionsSection = document.getElementById('admin-actions-section');
+            const loginModal = document.getElementById('login-modal');
+            const loginForm = document.getElementById('login-form');
+            const loginError = document.getElementById('login-error');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const modalMessage = document.getElementById('modal-message');
+            const closeConfirmationModalBtn = document.getElementById('close-confirmation-modal-btn');
+            
+            const normalizeConfirmModal = document.getElementById('normalize-confirm-modal');
+            const confirmNormalizeBtn = document.getElementById('confirm-normalize-btn');
+            const cancelNormalizeBtn = document.getElementById('cancel-normalize-btn');
+            const normalizeBtn = document.getElementById('normalize-btn');
+            
+            const resolveGeralModal = document.getElementById('resolve-geral-modal');
+            const resolveSpecificBtn = document.getElementById('resolve-specific-btn');
+            const resolveGeralBtn = document.getElementById('resolve-geral-btn');
+            const cancelResolveGeralBtn = document.getElementById('cancel-resolve-geral-btn');
+
+            const editCaseModal = document.getElementById('edit-case-modal');
+            const editNormalFooter = document.getElementById('edit-normal-footer');
+            const editGeralFooter = document.getElementById('edit-geral-footer');
+            const saveNormalBtn = document.getElementById('save-normal-btn');
+            const saveSpecificBtn = document.getElementById('save-specific-btn');
+            const saveGeralBtn = document.getElementById('save-geral-btn');
+            const cancelEditBtns = document.querySelectorAll('.cancel-edit-btn');
+            
+            const statusSelect = document.getElementById('status-select');
+            const editStatusSelect = document.getElementById('edit-status-select');
+            const cancelLoginBtn = document.getElementById('cancel-login-btn');
+
+            const showConfirmationModal = (message) => { modalMessage.textContent = message; confirmationModal.classList.remove('hidden'); }
+            const closeConfirmationModal = () => confirmationModal.classList.add('hidden');
+            const showNormalizeConfirmModal = () => normalizeConfirmModal.classList.remove('hidden');
+            const closeNormalizeConfirmModal = () => normalizeConfirmModal.classList.add('hidden');
+            const showResolveGeralModal = () => resolveGeralModal.classList.remove('hidden');
+            const closeResolveGeralModal = () => resolveGeralModal.classList.add('hidden');
+            const showEditModal = () => editCaseModal.classList.remove('hidden');
+            const closeEditModal = () => editCaseModal.classList.add('hidden');
+            const showLoginModal = () => { loginError.classList.add('hidden'); loginModal.classList.remove('hidden'); }
+            const closeLoginModal = () => loginModal.classList.add('hidden');
+
+            const updateUIVisibility = (user) => {
+                if (user) {
+                    loginBtn.classList.add('hidden');
+                    logoutBtn.classList.remove('hidden');
+                    adminActionsSection.classList.remove('hidden');
+                } else {
+                    loginBtn.classList.remove('hidden');
+                    logoutBtn.classList.add('hidden');
+                    adminActionsSection.classList.add('hidden');
+                }
+                renderAll(user);
+            };
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('username-input').value;
+                const password = document.getElementById('password-input').value;
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    closeLoginModal();
+                } catch(err) {
+                    console.error("Erro no login:", err);
+                    loginError.textContent = "E-mail ou senha inválidos.";
+                    loginError.classList.remove('hidden');
+                }
+            };
+            
+            const handleLogout = () => {
+                signOut(auth);
+            };
+
+            const handleResolveProblem = (e) => {
+                if (!e.target.matches('.resolve-btn')) return;
+                const { serviceId, caseId } = e.target.dataset;
+                const service = services.find(s => s.id === serviceId);
+                const problem = service?.problems.find(p => p.caseId === caseId);
+                if (!problem) return;
+
+                if (problem.geralCaseId) {
+                    resolveContext = { serviceId, caseId, geralCaseId: problem.geralCaseId };
+                    showResolveGeralModal();
+                } else {
+                    const updatedProblems = service.problems.filter(p => p.caseId !== caseId);
+                    updateDoc(doc(db, "services", serviceId), { problems: updatedProblems });
+                    showConfirmationModal('Caso resolvido com sucesso!');
+                }
+            }
+
+            const handleEditClick = (e) => {
+                if (!e.target.matches('.edit-btn')) return;
+                const { serviceId, caseId } = e.target.dataset;
+                const service = services.find(s => s.id === serviceId);
+                const problem = service?.problems.find(p => p.caseId === caseId);
+
+                if (problem) {
+                    document.getElementById('edit-service-id').value = serviceId;
+                    document.getElementById('edit-case-id').value = caseId;
+                    document.getElementById('edit-geral-case-id').value = problem.geralCaseId || '';
+                    document.getElementById('edit-status-select').value = problem.status;
+                    document.getElementById('edit-os-input').value = problem.os || '';
+                    document.getElementById('edit-details-input').value = problem.details || '';
+                    document.getElementById('edit-servico-impactado-input').value = problem.servicoImpactado || '';
+                    document.getElementById('edit-previsao-input').value = problem.previsao || '';
+                    
+                    updateSelectBackground(editStatusSelect);
+
+                    if (problem.geralCaseId) {
+                        editGeralFooter.classList.remove('hidden');
+                        editNormalFooter.classList.add('hidden');
+                    } else {
+                        editNormalFooter.classList.remove('hidden');
+                        editGeralFooter.classList.add('hidden');
+                    }
+                    showEditModal();
+                }
+            }
+            
+            const executeNormalization = async () => {
+                const batch = writeBatch(db);
+                services.forEach(s => {
+                    if (s.id !== 'geral_all' && s.problems.length > 0) {
+                        const serviceRef = doc(db, "services", s.id);
+                        batch.update(serviceRef, { problems: [] });
+                    }
+                });
+                await batch.commit();
+                closeNormalizeConfirmModal();
+                showConfirmationModal('Todos os ambientes foram normalizados com sucesso.');
+            }
+
+            const handleReportFormSubmit = async (event) => {
+                event.preventDefault();
+                const formData = new FormData(event.target);
+                const serviceId = formData.get('service');
+                
+                const baseProblem = { 
+                    status: formData.get('status'), os: formData.get('os'),
+                    details: formData.get('details'), servicoImpactado: formData.get('servicoImpactado'),
+                    previsao: formData.get('previsao'), reportDate: new Date().toISOString()
+                };
+
+                if (serviceId === 'geral_all') {
+                    const geralId = crypto.randomUUID();
+                    const batch = writeBatch(db);
+                    services.filter(s => s.id !== 'geral_all').forEach(s => {
+                        const newProblem = {...baseProblem, caseId: crypto.randomUUID(), geralCaseId: geralId };
+                        const updatedProblems = [...s.problems, newProblem];
+                        const serviceRef = doc(db, "services", s.id);
+                        batch.update(serviceRef, { problems: updatedProblems });
+                    });
+                    await batch.commit();
+                    showConfirmationModal('Caso geral registrado com sucesso!');
+                } else {
+                    const serviceToUpdate = services.find(s => s.id === serviceId);
+                    if (serviceToUpdate) {
+                        const newProblem = { ...baseProblem, caseId: crypto.randomUUID(), geralCaseId: null };
+                        const updatedProblems = [...serviceToUpdate.problems, newProblem];
+                        await updateDoc(doc(db, "services", serviceId), { problems: updatedProblems });
+                        showConfirmationModal('Caso registrado com sucesso!');
+                    }
+                }
+                
+                reportForm.reset();
+                updateSelectBackground(statusSelect);
+            }
+
+            const getFormData = (formId) => {
+                const form = document.getElementById(formId);
+                const formData = new FormData(form);
+                const data = {};
+                for (let [key, value] of formData.entries()) { data[key] = value; }
+                return data;
+            }
+
+            const handleSave = async (mode) => {
+                const data = getFormData('edit-case-form');
+                
+                if (mode === 'geral') {
+                    const batch = writeBatch(db);
+                    services.forEach(s => {
+                        const problemToUpdate = s.problems.find(p => p.geralCaseId === data.geralCaseId);
+                        if(problemToUpdate) {
+                             Object.assign(problemToUpdate, { status: data.status, os: data.os, details: data.details, servicoImpactado: data.servicoImpactado, previsao: data.previsao });
+                             const serviceRef = doc(db, "services", s.id);
+                             batch.update(serviceRef, { problems: s.problems });
+                        }
+                    });
+                    await batch.commit();
+                
+                } else {
+                    const service = services.find(s => s.id === data.serviceId);
+                    const problemIndex = service?.problems.findIndex(p => p.caseId === data.caseId);
+                    if (service && problemIndex > -1) {
+                        const updatedProblems = [...service.problems];
+                        const problem = updatedProblems[problemIndex];
+                        Object.assign(problem, { status: data.status, os: data.os, details: data.details, servicoImpactado: data.servicoImpactado, previsao: data.previsao });
+                        if (mode === 'specific') problem.geralCaseId = null;
+                        await updateDoc(doc(db, "services", service.id), { problems: updatedProblems });
+                    }
+                }
+                closeEditModal();
+                showConfirmationModal('Caso atualizado com sucesso!');
+            }
+
+            const updateDateTime = () => {
+                 currentDatetimeEl.textContent = new Date().toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'medium'});
+            };
+            
+            const renderAll = (user) => {
+                renderSummaryDashboard(summaryDashboard);
+                renderLegend(legendContainer);
+                renderStatus(mainContent, layoutFilter, !!user);
+            }
+
+            // --- INICIALIZAÇÃO DA APLICAÇÃO ---
+            
+            loginForm.addEventListener('submit', handleLogin);
+            loginBtn.addEventListener('click', showLoginModal);
+            logoutBtn.addEventListener('click', handleLogout);
+            cancelLoginBtn.addEventListener('click', closeLoginModal);
+            reportForm.addEventListener('submit', handleReportFormSubmit);
+            saveNormalBtn.addEventListener('click', () => handleSave('normal'));
+            saveSpecificBtn.addEventListener('click', () => handleSave('specific'));
+            saveGeralBtn.addEventListener('click', () => handleSave('geral'));
+            normalizeBtn.addEventListener('click', showNormalizeConfirmModal);
+            confirmNormalizeBtn.addEventListener('click', executeNormalization);
+            cancelNormalizeBtn.addEventListener('click', closeNormalizeConfirmModal);
+            cancelEditBtns.forEach(btn => btn.addEventListener('click', closeEditModal));
+            closeConfirmationModalBtn.addEventListener('click', closeConfirmationModal);
+            resolveSpecificBtn.addEventListener('click', async () => {
+                const { serviceId, caseId } = resolveContext;
+                const service = services.find(s => s.id === serviceId);
+                if(service) {
+                    const updatedProblems = service.problems.filter(p => p.caseId !== caseId);
+                    await updateDoc(doc(db, "services", serviceId), { problems: updatedProblems });
+                    showConfirmationModal('Caso específico resolvido com sucesso!');
+                }
+                closeResolveGeralModal();
+            });
+            resolveGeralBtn.addEventListener('click', async () => {
+                const { geralCaseId } = resolveContext;
+                const batch = writeBatch(db);
+                services.forEach(s => {
+                    const updatedProblems = s.problems.filter(p => p.geralCaseId !== geralCaseId);
+                    if(updatedProblems.length < s.problems.length){
+                        const serviceRef = doc(db, "services", s.id);
+                        batch.update(serviceRef, { problems: updatedProblems });
+                    }
+                });
+                await batch.commit();
+                showConfirmationModal('Todos os casos gerais relacionados foram resolvidos!');
+                closeResolveGeralModal();
+            });
+            cancelResolveGeralBtn.addEventListener('click', closeResolveGeralModal);
+            window.onclick = function(event) {
+                if (event.target == confirmationModal) closeConfirmationModal();
+                if (event.target == normalizeConfirmModal) closeNormalizeConfirmModal();
+                if (event.target == editCaseModal) closeEditModal();
+                if (event.target == resolveGeralModal) closeResolveGeralModal();
+                if (event.target == loginModal) closeLoginModal();
+            }
+            statusSelect.addEventListener('change', () => updateSelectBackground(statusSelect));
+            editStatusSelect.addEventListener('change', () => updateSelectBackground(editStatusSelect));
+            layoutFilter.addEventListener('change', () => renderAll(auth.currentUser));
+            mainContent.addEventListener('click', (e) => {
+                handleResolveProblem(e);
+                handleEditClick(e);
+            });
+
+            // Conecta ao Firebase
+            try {
+                onAuthStateChanged(auth, async (user) => {
+                    updateUIVisibility(user);
+                });
+                
+                const servicesCollection = collection(db, "services");
+                const docsSnap = await getDocs(servicesCollection);
+                
+                if (docsSnap.empty) {
+                    try {
+                        const batch = writeBatch(db);
+                        initialServices.forEach(service => {
+                            const serviceRef = doc(db, "services", service.id);
+                            batch.set(serviceRef, service);
+                        });
+                        await batch.commit();
+                    } catch (e) {
+                        if (e.code === 'permission-denied') {
+                            console.log("Banco de dados vazio. Faça login como administrador para popular os dados iniciais.");
+                        }
+                    }
+                }
+
+                onSnapshot(servicesCollection, (snapshot) => {
+                    services = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    services.sort((a,b) => {
+                        const aIndex = initialServices.findIndex(s => s.id === a.id);
+                        const bIndex = initialServices.findIndex(s => s.id === b.id);
+                        return aIndex - bIndex;
+                    });
+                    populateSelects(document.getElementById('service-select'), statusSelect, editStatusSelect);
+                    renderAll(auth.currentUser);
+                }, (error) => {
+                    console.error("Erro no listener do Firebase: ", error);
+                     document.body.innerHTML = `<div class="p-8 text-center text-red-500 bg-red-100"><h1 class="text-2xl font-bold">Erro de Conexão</h1><p class="mt-4">Não foi possível conectar ao banco de dados. Verifique a configuração do Firebase e as regras de segurança.</p></div>`;
+                });
+            } catch (error) {
+                 console.error("Erro ao inicializar o Firebase:", error);
+                 document.body.innerHTML = `<div class="p-8 text-center text-red-500 bg-red-100"><h1 class="text-2xl font-bold">Erro de Conexão</h1><p class="mt-4">Não foi possível conectar ao banco de dados. Verifique a configuração do Firebase e as regras de segurança.</p></div>`;
+            }
+
+            populateFilter(layoutFilter);
+            updateSelectBackground(statusSelect);
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
+    </script>
+</body>
+</html>
